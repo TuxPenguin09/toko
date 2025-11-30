@@ -2,6 +2,8 @@
 
 A EntJava2 Project by M G T
 
+Statolumn clone (portfolio project by M) but rewritten for simplier and lightweight use.
+
 ## Instructions
 
 ### 1. Docker Compose (run first)
