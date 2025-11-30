@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Toko</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
+        .flash { color: red; margin-bottom: 12px; }
+        .success { color: green; margin-bottom: 12px; }
+        form { display:flex; flex-direction:column; gap:8px; }
+    </style>
+</head>
+<body>
+<h1>Register</h1>
+<div th:if="${error}" class="flash" th:text="${error}"></div>
+<div th:if="${success}" class="success" th:text="${success}"></div>
+<form method="post" th:action="@{/register}">
+    <label>Username <input type="text" name="username" required></label>
+    <label>Password <input type="password" name="password" required></label>
+    <label>Confirm Password <input type="password" name="confirm" required></label>
+    <button type="submit">Register</button>
+</form>
+<p><a th:href="@{/login}">Already have an account? Login</a></p>
+<p><a th:href="@{/}">Back to home</a></p>
+</body>
+</html>
+

@@ -31,11 +31,27 @@ public class Post {
         createdAt = LocalDateTime.now();
     }
 
-    public void setUser(User user) {
+    public Long getId() {
+        return id;
+    }
 
+    public String getContent() {
+        return content;
     }
 
     public void setContent(String content) {
+        this.content = content;
+    }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

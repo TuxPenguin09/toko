@@ -2,13 +2,12 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Toko</title>
+    <title th:text="${user.username} + ' - Toko'">User Page</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding:16px }
         .post { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
-        a { text-decoration: none; color: blue; }
-        .form-row { display:flex; gap:8px; align-items:center; margin-top:12px; }
+        .delete-btn { color: red; font-size: 0.8em; cursor: pointer; }
         .flash { color: red; margin-bottom:12px; }
         .sr-only { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
         .meta { display:flex; justify-content:space-between; align-items:center }
@@ -16,7 +15,7 @@
 </head>
 <body>
 <div class="meta">
-    <h1>Toko</h1>
+    <h1 th:text="${user.username}">Username</h1>
     <div>
         <span th:if="${currentUser}">Hello, <a th:href="@{/user/{id}(id=${currentUser.id})}" th:text="${currentUser.username}">User</a></span>
         <span th:if="${currentUser}">
@@ -31,19 +30,24 @@
 </div>
 
 <div th:if="${error}" class="flash" th:text="${error}"></div>
-<div th:if="${success}" class="flash" th:text="${success}" style="color:green"></div>
 
-<form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" class="form-row">
-    <label for="contentInput" class="sr-only">Post content</label>
-    <input id="contentInput" type="text" name="content" placeholder="What's happening?" required maxlength="280" style="flex:1">
+<form th:if="${currentUser != null and currentUser.id == user.id}" th:action="@{/user/{id}/post(id=${user.id})}" method="post">
+    <label for="postContent" class="sr-only">Post content</label>
+    <input id="postContent" type="text" name="content" placeholder="What's happening?" required maxlength="280" style="width:70%">
     <button type="submit">Post</button>
 </form>
 
-<div th:if="${currentUser == null}" style="margin-top:12px;">Please <a th:href="@{/login}">login</a> to post.</div>
+<div th:if="${#lists.isEmpty(posts)}" style="margin-top:12px;">No posts yet.</div>
 
 <div th:each="post : ${posts}" class="post">
-    <a th:href="@{/user/{id}(id=${post.user.id})}" th:text="${post.user.username}">Username</a>:
     <span th:text="${post.content}">Content</span>
+    <form th:if="${currentUser != null and currentUser.id == user.id}" th:action="@{/post/{postId}/delete(postId=${post.id})}" method="post" style="display:inline" onsubmit="return confirm('Delete this post?');">
+        <input type="hidden" name="userId" th:value="${user.id}">
+        <button type="submit" class="delete-btn">Delete</button>
+    </form>
 </div>
+
+<a href="/" style="display:block; margin-top:20px;">Back to Home</a>
+
 </body>
 </html>
