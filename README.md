@@ -2,7 +2,7 @@
 
 A EntJava2 Project by **Moritz Chester Saribay**, **Geoff Ronyl Orosco** and **Takuya Nakasone**
 
-(Statolumn)[https://statolumn.com] clone (portfolio project by M) but rewritten for simplier and lightweight use.
+[Statolumn](https://statolumn.com) clone (portfolio project by M) but rewritten for simplier and lightweight use.
 
 ## Instructions
 
