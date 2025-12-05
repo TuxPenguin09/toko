@@ -1,0 +1,92 @@
+{
+  "info": {
+    "name": "Toko - Quick Collection",
+    "_postman_id": "toko-collection",
+    "description": "Basic requests for the Toko app (form-based flows + media upload via media service)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register (form)",
+      "request": {
+        "method": "POST",
+        "header": [
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "username", "value": "alice", "type": "text" },
+            { "key": "password", "value": "secret123", "type": "text" },
+            { "key": "confirm", "value": "secret123", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8090/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8090",
+          "path": ["register"]
+        }
+      }
+    },
+    {
+      "name": "Login (form)",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "username", "value": "alice", "type": "text" },
+            { "key": "password", "value": "secret123", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8090/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8090",
+          "path": ["login"]
+        }
+      }
+    },
+    {
+      "name": "Create Post (with file)",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "content", "value": "Hello from Postman", "type": "text" },
+            { "key": "file", "type": "file" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8090/user/1/post",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8090",
+          "path": ["user","1","post"]
+        }
+      }
+    },
+    {
+      "name": "Media Upload (direct)",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file" }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8092/api/media/upload",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8092",
+          "path": ["api","media","upload"]
+        }
+      }
+    }
+  ]
+}
