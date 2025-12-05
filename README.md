@@ -1,6 +1,6 @@
 # Toko
 
-A EntJava2 Project by M G T
+A EntJava2 Project by **Moritz Chester Saribay**, **Geoff Ronyl Orosco** and **Takuya Nakasone**
 
 Statolumn clone (portfolio project by M) but rewritten for simplier and lightweight use.
 
