@@ -33,9 +33,10 @@
 <div th:if="${error}" class="flash" th:text="${error}"></div>
 <div th:if="${success}" class="flash" th:text="${success}" style="color:green"></div>
 
-<form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" class="form-row">
+<form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" enctype="multipart/form-data" class="form-row">
     <label for="contentInput" class="sr-only">Post content</label>
     <input id="contentInput" type="text" name="content" placeholder="What's happening?" required maxlength="280" style="flex:1">
+    <input type="file" name="file" accept="image/*" style="width:120px">
     <button type="submit">Post</button>
 </form>
 
@@ -44,6 +45,19 @@
 <div th:each="post : ${posts}" class="post">
     <a th:href="@{/user/{id}(id=${post.user.id})}" th:text="${post.user.username}">Username</a>:
     <span th:text="${post.content}">Content</span>
+    <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}">
+        <img th:if="${#strings.startsWith(mediaMap[post.mediaId]['type'], 'image')}"
+             th:src="${mediaMap[post.mediaId]['url']}"
+             th:alt="${mediaMap[post.mediaId]['filename']}"
+             style="max-width:100%; margin-top:8px; display:block">
+
+        <video th:if="${#strings.startsWith(mediaMap[post.mediaId]['type'], 'video')}"
+               controls
+               th:src="${mediaMap[post.mediaId]['url']}"
+               style="max-width:100%; margin-top:8px; display:block">
+            Your browser does not support the video tag.
+        </video>
+    </div>
 </div>
 </body>
 </html>

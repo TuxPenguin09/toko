@@ -17,10 +17,19 @@ public class PostService {
         return postRepo.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
+    public List<Post> getAllPostsDesc() {
+        return postRepo.findAllByOrderByCreatedAtDesc();
+    }
+
     public void createPost(User user, String content) {
+        createPost(user, content, null);
+    }
+
+    public void createPost(User user, String content, Long mediaId) {
         Post p = new Post();
         p.setUser(user);
         p.setContent(content);
+        if (mediaId != null) p.setMediaId(mediaId);
         postRepo.save(p);
     }
 

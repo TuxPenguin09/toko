@@ -22,6 +22,9 @@ public class Post {
 
     private LocalDateTime createdAt;
 
+    // optional media reference (stores id from media table)
+    private Long mediaId;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -45,6 +48,14 @@ public class Post {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Long getMediaId() {
+        return mediaId;
+    }
+
+    public void setMediaId(Long mediaId) {
+        this.mediaId = mediaId;
     }
 
     public User getUser() {
