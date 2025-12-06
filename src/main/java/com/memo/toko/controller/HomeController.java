@@ -3,6 +3,8 @@ package com.memo.toko.controller;
 import org.springframework.beans.factory.annotation.Value;
 import com.memo.toko.model.Post;
 import com.memo.toko.model.User;
+import com.memo.toko.model.Like;
+import com.memo.toko.repository.LikeRepository;
 import com.memo.toko.repository.UserRepository;
 import com.memo.toko.service.PostService;
 import com.memo.toko.service.UserService;
@@ -31,9 +33,13 @@ import jakarta.servlet.http.HttpSession;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -43,16 +49,19 @@ public class HomeController {
     private final UserService userService;
     private final PostService postService;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
     private final String mediaBaseUrl;
 
     @Autowired
     public HomeController(UserService userService,
                           PostService postService,
                           UserRepository userRepository,
+                          LikeRepository likeRepository,
                           @Value("${media.service.base-url:http://localhost:8092}") String mediaBaseUrl) {
         this.userService = userService;
         this.postService = postService;
         this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
         this.mediaBaseUrl = (mediaBaseUrl == null ? "http://localhost:8092" : mediaBaseUrl.trim());
     }
 
@@ -70,17 +79,28 @@ public class HomeController {
     }
 
     @GetMapping
-    public String index(Model model) {
+    public String index(Model model, HttpSession session) {
         List<Post> posts = postService.getAllPostsDesc();
         model.addAttribute("posts", posts);
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("newPost", new Post());
         model.addAttribute("mediaMap", mediaForPosts(posts));
+
+        model.addAttribute("likeCounts", getLikeCounts(posts));
+
+        Object uid = session.getAttribute("userId");
+        if (uid != null) {
+            Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
+            model.addAttribute("likedPosts", getLikedPostIds(userId, posts));
+        } else {
+            model.addAttribute("likedPosts", new HashSet<Long>()); // Empty set for non-logged in
+        }
+
         return "index";
     }
 
     @GetMapping("user/{id}")
-    public String userPage(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String userPage(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes, HttpSession session) {
         User user = userService.getUser(id);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "User not found");
@@ -90,6 +110,19 @@ public class HomeController {
         List<Post> posts = postService.getUserPosts(id);
         model.addAttribute("posts", posts);
         model.addAttribute("mediaMap", mediaForPosts(posts));
+
+        // ALWAYS add likeCounts to the model
+        model.addAttribute("likeCounts", getLikeCounts(posts));
+
+        // Add likedPosts only if logged in, otherwise empty set
+        Object uid = session.getAttribute("userId");
+        if (uid != null) {
+            Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
+            model.addAttribute("likedPosts", getLikedPostIds(userId, posts));
+        } else {
+            model.addAttribute("likedPosts", new HashSet<Long>()); // Empty set for non-logged in
+        }
+
         return "user"; // Thymeleaf template
     }
 
@@ -208,6 +241,54 @@ public class HomeController {
             redirectAttributes.addFlashAttribute("error", "Could not delete post");
         }
         return "redirect:/user/" + userId;
+    }
+
+    @PostMapping("/post/{postId}/like")
+    public String likePost(@PathVariable Long postId,
+                           HttpSession session,
+                           RedirectAttributes redirectAttributes) {
+        Object uid = session.getAttribute("userId");
+        if (uid == null) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to like posts");
+            return "redirect:/login";
+        }
+
+        Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
+
+        Optional<Like> existingLike = likeRepository.findByUserIdAndPostId(userId, postId);
+
+        if (existingLike.isPresent()) {
+            likeRepository.delete(existingLike.get());
+        } else {
+            User user = userService.getUser(userId);
+            Post post = postService.getPostById(postId);
+            if (post != null) {
+                Like like = new Like();
+                like.setUser(user);
+                like.setPost(post);
+                likeRepository.save(like);
+            }
+        }
+
+        return "redirect:/";
+    }
+
+        private Map<Long, Integer> getLikeCounts(List<Post> posts) {
+        Map<Long, Integer> counts = new HashMap<>();
+        for (Post post : posts) {
+            counts.put(post.getId(), likeRepository.countByPostId(post.getId()));
+        }
+        return counts;
+    }
+
+    private Set<Long> getLikedPostIds(Long userId, List<Post> posts) {
+        Set<Long> likedIds = new HashSet<>();
+        for (Post post : posts) {
+            if (likeRepository.existsByUserIdAndPostId(userId, post.getId())) {
+                likedIds.add(post.getId());
+            }
+        }
+        return likedIds;
     }
 
     @PostMapping("user/{id}/profile-picture")

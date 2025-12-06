@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title th:text="${user.username} + ' - Toko'">User Page</title>
@@ -94,7 +95,8 @@
             margin-bottom: 20px;
         }
 
-        .nav-top a, .nav-top button {
+        .nav-top a,
+        .nav-top button {
             color: var(--primary-color);
             text-decoration: none;
             margin-left: 20px;
@@ -105,7 +107,8 @@
             font-size: 0.95rem;
         }
 
-        .nav-top a:hover, .nav-top button:hover {
+        .nav-top a:hover,
+        .nav-top button:hover {
             text-decoration: underline;
         }
 
@@ -231,8 +234,85 @@
             text-align: center;
             padding: 40px 20px;
         }
+
+        .like-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            padding: 6px 12px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .like-btn:hover {
+            background-color: rgba(236, 72, 153, 0.1);
+            color: #ec4899;
+            transform: scale(1.05);
+        }
+
+        .like-btn.liked {
+            color: #ec4899;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.3);
+        }
+
+        .like-btn.liked:hover {
+            background-color: rgba(236, 72, 153, 0.15);
+            text-shadow: 0 0 12px rgba(236, 72, 153, 0.5);
+        }
+
+        /* Heart icon styling */
+        .like-btn i {
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+        }
+
+        .like-btn.liked i {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 1),
+                0 0 12px rgba(236, 72, 153, 0.5);
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1)) drop-shadow(0 0 5px rgba(236, 72, 153, 0.3));
+        }
+
+        .like-btn:hover i {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 1);
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1));
+        }
+
+        /* Like count styling */
+        .like-count {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #ffffff;
+            /* White text */
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+            background-color: rgba(236, 72, 153, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .like-btn.liked .like-count {
+            background-color: rgba(236, 72, 153, 0.3);
+            color: #ffffff;
+            /* White text */
+            text-shadow: 0 0 4px rgba(236, 72, 153, 0.5);
+        }
+
+        .like-btn:hover .like-count {
+            background-color: rgba(236, 72, 153, 0.25);
+        }
     </style>
 </head>
+
 <body>
     <div class="container" style="background-color: transparent;">
         <header class="header">
@@ -248,7 +328,8 @@
             <div class="nav-top">
                 <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
                 <div>
-                    <span th:if="${currentUser}" style="color: var(--text-light); margin-right: 20px;">Hello, <span th:text="${currentUser.username}"></span></span>
+                    <span th:if="${currentUser}" style="color: var(--text-light); margin-right: 20px;">Hello, <span
+                            th:text="${currentUser.username}"></span></span>
                     <span th:if="${currentUser}">
                         <form th:action="@{/logout}" method="post" style="display:inline">
                             <button type="submit">Logout</button>
@@ -268,26 +349,22 @@
             <div class="user-header">
                 <div class="profile-picture-container">
                     <!-- Profile Picture -->
-                    <img th:if="${user.profilePicture}" th:src="${user.profilePicture}" alt="Profile picture" class="profile-picture">
+                    <img th:if="${user.profilePicture}" th:src="${user.profilePicture}" alt="Profile picture"
+                        class="profile-picture">
                     <div th:if="!${user.profilePicture}" class="profile-picture-placeholder">
                         <i class="fas fa-user"></i>
                     </div>
 
                     <!-- Upload Button (only for own profile) -->
-                    <button th:if="${currentUser != null and currentUser.id == user.id}" 
-                            class="upload-button" 
-                            id="uploadBtn" 
-                            title="Upload profile picture">
+                    <button th:if="${currentUser != null and currentUser.id == user.id}" class="upload-button"
+                        id="uploadBtn" title="Upload profile picture">
                         <i class="fas fa-camera"></i>
                     </button>
 
                     <!-- Hidden File Input -->
-                    <form th:if="${currentUser != null and currentUser.id == user.id}" 
-                          th:action="@{/user/{id}/profile-picture(id=${user.id})}" 
-                          method="post" 
-                          enctype="multipart/form-data"
-                          id="uploadForm"
-                          style="display: none;">
+                    <form th:if="${currentUser != null and currentUser.id == user.id}"
+                        th:action="@{/user/{id}/profile-picture(id=${user.id})}" method="post"
+                        enctype="multipart/form-data" id="uploadForm" style="display: none;">
                         <input type="file" id="profilePictureInput" name="file" accept="image/*" required>
                     </form>
                 </div>
@@ -298,16 +375,16 @@
             </div>
 
             <!-- Post Form (only for own profile) -->
-            <form th:if="${currentUser != null and currentUser.id == user.id}" 
-                  th:action="@{/user/{id}/post(id=${user.id})}" 
-                  method="post" 
-                  enctype="multipart/form-data"
-                  class="post-form">
+            <form th:if="${currentUser != null and currentUser.id == user.id}"
+                th:action="@{/user/{id}/post(id=${user.id})}" method="post" enctype="multipart/form-data"
+                class="post-form">
                 <label for="postContent" class="sr-only">Post content</label>
-                <input id="postContent" type="text" name="content" placeholder="What's happening?" required maxlength="280">
+                <input id="postContent" type="text" name="content" placeholder="What's happening?" required
+                    maxlength="280">
                 <div style="display:flex; align-items:center; gap:10px; width:100%;">
                     <input type="file" id="postFileInputUser" name="file" accept="image/*" style="display:none" />
-                    <button type="button" id="postUploadBtnUser" class="btn" style="padding:8px 10px; background:transparent; border:1px solid var(--input-border); border-radius:6px; cursor:pointer;"> 
+                    <button type="button" id="postUploadBtnUser" class="btn"
+                        style="padding:8px 10px; background:transparent; border:1px solid var(--input-border); border-radius:6px; cursor:pointer;">
                         <i class="fas fa-image"></i> Add media
                     </button>
                     <span id="postFileNameUser" style="color:var(--text-muted); font-size:0.9rem;"></span>
@@ -323,7 +400,8 @@
                     <div class="post-with-pic">
                         <!-- Profile Picture -->
                         <div class="post-avatar">
-                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}" alt="Profile picture" class="post-avatar-img">
+                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}"
+                                alt="Profile picture" class="post-avatar-img">
                             <div th:if="!${post.user.profilePicture}" class="post-avatar-placeholder">
                                 <i class="fas fa-user"></i>
                             </div>
@@ -331,12 +409,26 @@
 
                         <div class="post-details">
                             <div class="post-header">
-                                <a th:href="@{/user/{id}(id=${post.user.id})}" class="post-username" th:text="${post.user.username}">Username</a>
-                                <span class="post-timestamp" th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2024 12:30</span>
+                                <a th:href="@{/user/{id}(id=${post.user.id})}" class="post-username"
+                                    th:text="${post.user.username}">Username</a>
+                                <span class="post-timestamp"
+                                    th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2024
+                                    12:30</span>
                             </div>
                             <div class="post-content" th:text="${post.content}">Content</div>
-                            <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}" class="post-media-wrapper">
-                                <img th:src="${mediaMap[post.mediaId].url}" alt="Post media" class="post-media" style="max-width:100%; margin-top:8px; border-radius:8px;"/>
+                            <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}"
+                                class="post-media-wrapper">
+                                <img th:src="${mediaMap[post.mediaId].url}" alt="Post media" class="post-media"
+                                    style="max-width:100%; margin-top:8px; border-radius:8px;" />
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <form th:action="@{/post/{postId}/like(postId=${post.id})}" method="post">
+                                    <button type="submit" class="like-btn">
+                                        <i class="far fa-heart"></i>
+                                        <span th:text="${likeCounts != null ? likeCounts.get(post.id) : 0}">0</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -352,11 +444,11 @@
         const uploadForm = document.getElementById('uploadForm');
 
         if (uploadBtn && profilePictureInput) {
-            uploadBtn.addEventListener('click', function() {
+            uploadBtn.addEventListener('click', function () {
                 profilePictureInput.click();
             });
 
-            profilePictureInput.addEventListener('change', function() {
+            profilePictureInput.addEventListener('change', function () {
                 if (this.files.length > 0) {
                     uploadForm.submit();
                 }
@@ -369,7 +461,7 @@
         const postFileNameUser = document.getElementById('postFileNameUser');
         if (postUploadBtnUser && postFileInputUser) {
             postUploadBtnUser.addEventListener('click', () => postFileInputUser.click());
-            postFileInputUser.addEventListener('change', function() {
+            postFileInputUser.addEventListener('change', function () {
                 if (this.files && this.files.length > 0) {
                     postFileNameUser.textContent = this.files[0].name;
                 } else {
@@ -379,4 +471,5 @@
         }
     </script>
 </body>
+
 </html>

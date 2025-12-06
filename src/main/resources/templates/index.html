@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <title>Toko - Home</title>
@@ -7,7 +8,86 @@
     <link rel="stylesheet" href="/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .like-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            /* Light gray for unliked state */
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            padding: 6px 12px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .like-btn:hover {
+            background-color: rgba(236, 72, 153, 0.1);
+            color: #ec4899;
+            transform: scale(1.05);
+        }
+
+        .like-btn.liked {
+            color: #ec4899;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.3);
+        }
+
+        .like-btn.liked:hover {
+            background-color: rgba(236, 72, 153, 0.15);
+            text-shadow: 0 0 12px rgba(236, 72, 153, 0.5);
+        }
+
+        /* Heart icon styling */
+        .like-btn i {
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+            text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+        }
+
+        .like-btn.liked i {
+            text-shadow: 0 0 8px rgba(255, 255, 255, 1),
+                0 0 12px rgba(236, 72, 153, 0.5);
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1)) drop-shadow(0 0 5px rgba(236, 72, 153, 0.3));
+        }
+
+        .like-btn:hover i {
+            text-shadow: 0 0 6px rgba(255, 255, 255, 1);
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 1));
+        }
+
+        /* Like count styling */
+        .like-count {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #ffffff;
+            /* White text */
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+            background-color: rgba(236, 72, 153, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .like-btn.liked .like-count {
+            background-color: rgba(236, 72, 153, 0.3);
+            color: #ffffff;
+            /* White text */
+            text-shadow: 0 0 4px rgba(236, 72, 153, 0.5);
+        }
+
+        .like-btn:hover .like-count {
+            background-color: rgba(236, 72, 153, 0.25);
+        }
+    </style>
 </head>
+
 <body>
     <div class="container">
         <header class="header">
@@ -51,11 +131,13 @@
             <div th:if="${error}" class="flash" th:text="${error}"></div>
             <div th:if="${success}" class="flash success" th:text="${success}"></div>
 
-            <form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" enctype="multipart/form-data" class="post-form-container-with-pic">
+            <form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post"
+                enctype="multipart/form-data" class="post-form-container-with-pic">
                 <div class="post-with-pic-wrapper">
                     <!-- Profile Picture -->
                     <div class="post-form-pic">
-                        <img th:if="${currentUser.profilePicture}" th:src="${currentUser.profilePicture}" alt="Your profile picture" class="post-form-avatar">
+                        <img th:if="${currentUser.profilePicture}" th:src="${currentUser.profilePicture}"
+                            alt="Your profile picture" class="post-form-avatar">
                         <div th:if="!${currentUser.profilePicture}" class="post-form-avatar-placeholder">
                             <i class="fas fa-user"></i>
                         </div>
@@ -64,12 +146,14 @@
                     <div class="post-form-content">
                         <div class="post-input-wrapper">
                             <label for="contentInput" class="sr-only">Post content</label>
-                            <input id="contentInput" type="text" name="content" placeholder="What's happening?" required maxlength="280">
+                            <input id="contentInput" type="text" name="content" placeholder="What's happening?" required
+                                maxlength="280">
                         </div>
 
                         <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
                             <input type="file" id="postFileInput" name="file" accept="image/*" style="display:none" />
-                            <button type="button" id="postUploadBtn" class="btn" style="padding:8px 10px; background:transparent; border:1px solid var(--input-border); border-radius:6px; cursor:pointer;"> 
+                            <button type="button" id="postUploadBtn" class="btn"
+                                style="padding:8px 10px; background:transparent; border:1px solid var(--input-border); border-radius:6px; cursor:pointer;">
                                 <i class="fas fa-image"></i> Add media
                             </button>
                             <span id="postFileName" style="color:var(--text-muted); font-size:0.9rem;"></span>
@@ -90,7 +174,8 @@
                     <div class="post-with-pic">
                         <!-- Profile Picture -->
                         <div class="post-avatar">
-                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}" alt="Profile picture" class="post-avatar-img">
+                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}"
+                                alt="Profile picture" class="post-avatar-img">
                             <div th:if="!${post.user.profilePicture}" class="post-avatar-placeholder">
                                 <i class="fas fa-user"></i>
                             </div>
@@ -98,12 +183,26 @@
 
                         <div class="post-details">
                             <div class="post-header">
-                                <a th:href="@{/user/{id}(id=${post.user.id})}" class="post-username" th:text="${post.user.username}">Username</a>
-                                <span class="post-timestamp" th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2024 12:30</span>
+                                <a th:href="@{/user/{id}(id=${post.user.id})}" class="post-username"
+                                    th:text="${post.user.username}">Username</a>
+                                <span class="post-timestamp"
+                                    th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2024
+                                    12:30</span>
                             </div>
                             <div class="post-content" th:text="${post.content}">Content</div>
-                            <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}" class="post-media-wrapper">
-                                <img th:src="${mediaMap[post.mediaId].url}" alt="Post media" class="post-media" style="max-width:100%; margin-top:8px; border-radius:8px;"/>
+                            <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}"
+                                class="post-media-wrapper">
+                                <img th:src="${mediaMap[post.mediaId].url}" alt="Post media" class="post-media"
+                                    style="max-width:100%; margin-top:8px; border-radius:8px;" />
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <form th:action="@{/post/{postId}/like(postId=${post.id})}" method="post">
+                                    <button type="submit" class="like-btn">
+                                        <i class="far fa-heart"></i>
+                                        <span th:text="${likeCounts != null ? likeCounts.get(post.id) : 0}">0</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -118,13 +217,13 @@
         const dropdownMenu = document.getElementById('dropdownMenu');
 
         if (profileBtn && dropdownMenu) {
-            profileBtn.addEventListener('click', function(e) {
+            profileBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 dropdownMenu.classList.toggle('active');
             });
 
             // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (!e.target.closest('.profile-dropdown-wrapper')) {
                     dropdownMenu.classList.remove('active');
                 }
@@ -132,7 +231,7 @@
 
             // Close dropdown when clicking on a menu item
             dropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
-                item.addEventListener('click', function() {
+                item.addEventListener('click', function () {
                     dropdownMenu.classList.remove('active');
                 });
             });
@@ -144,7 +243,7 @@
         const postFileName = document.getElementById('postFileName');
         if (postUploadBtn && postFileInput) {
             postUploadBtn.addEventListener('click', () => postFileInput.click());
-            postFileInput.addEventListener('change', function() {
+            postFileInput.addEventListener('change', function () {
                 if (this.files && this.files.length > 0) {
                     postFileName.textContent = this.files[0].name;
                 } else {
@@ -154,4 +253,5 @@
         }
     </script>
 </body>
+
 </html>
