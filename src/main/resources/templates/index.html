@@ -2,62 +2,131 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Toko</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
-        .post { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
-        a { text-decoration: none; color: blue; }
-        .form-row { display:flex; gap:8px; align-items:center; margin-top:12px; }
-        .flash { color: red; margin-bottom:12px; }
-        .sr-only { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
-        .meta { display:flex; justify-content:space-between; align-items:center }
-    </style>
+    <title>Toko - Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-<div class="meta">
-    <h1>Toko</h1>
-    <div>
-        <span th:if="${currentUser}">Hello, <a th:href="@{/user/{id}(id=${currentUser.id})}" th:text="${currentUser.username}">User</a></span>
-        <span th:if="${currentUser}">
-            <form th:action="@{/logout}" method="post" style="display:inline">
-                <button type="submit">Logout</button>
+    <div class="container">
+        <header class="header">
+            <div class="logo">Toko</div>
+            <nav class="nav">
+                <a href="/">Home</a>
+                <a href="#posts">Feed</a>
+            </nav>
+        </header>
+
+        <main class="home-container">
+            <div class="meta">
+                <h1>Feed</h1>
+                <div class="meta-right">
+                    <!-- User Profile Dropdown -->
+                    <div th:if="${currentUser}" class="profile-dropdown-wrapper">
+                        <button class="profile-btn" id="profileBtn" title="Profile menu">
+                            <i class="fas fa-user-circle"></i>
+                        </button>
+                        <div class="dropdown-menu" id="dropdownMenu">
+                            <a th:href="@{/user/{id}(id=${currentUser.id})}" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                <span th:text="${currentUser.username}">Profile</span>
+                            </a>
+                            <form th:action="@{/logout}" method="post" class="dropdown-item-form">
+                                <button type="submit" class="dropdown-item dropdown-logout">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Non-logged-in links -->
+                    <span th:if="${currentUser == null}" class="auth-links">
+                        <a href="/login">Login</a> | <a href="/register">Register</a>
+                    </span>
+                </div>
+            </div>
+
+            <div th:if="${error}" class="flash" th:text="${error}"></div>
+            <div th:if="${success}" class="flash success" th:text="${success}"></div>
+
+            <form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" class="post-form-container-with-pic">
+                <div class="post-with-pic-wrapper">
+                    <!-- Profile Picture -->
+                    <div class="post-form-pic">
+                        <img th:if="${currentUser.profilePicture}" th:src="${currentUser.profilePicture}" alt="Your profile picture" class="post-form-avatar">
+                        <div th:if="!${currentUser.profilePicture}" class="post-form-avatar-placeholder">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+
+                    <div class="post-form-content">
+                        <div class="post-input-wrapper">
+                            <label for="contentInput" class="sr-only">Post content</label>
+                            <input id="contentInput" type="text" name="content" placeholder="What's happening?" required maxlength="280">
+                        </div>
+
+                        <div class="post-actions">
+                            <button type="submit" class="btn btn-primary">Post</button>
+                        </div>
+                    </div>
+                </div>
             </form>
-        </span>
-        <span th:if="${currentUser == null}">
-            <a th:href="@{/login}">Login</a> | <a th:href="@{/register}">Register</a>
-        </span>
+
+            <div th:if="${currentUser == null}" class="login-prompt">
+                <p>Please <a href="/login">login</a> or <a href="/register">register</a> to post.</p>
+            </div>
+
+            <div id="posts">
+                <div th:each="post : ${posts}" class="post-item">
+                    <div class="post-with-pic">
+                        <!-- Profile Picture -->
+                        <div class="post-avatar">
+                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}" alt="Profile picture" class="post-avatar-img">
+                            <div th:if="!${post.user.profilePicture}" class="post-avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+
+                        <div class="post-details">
+                            <div class="post-header">
+                                <a th:href="@{/user/{id}(id=${post.user.id})}" class="post-username" th:text="${post.user.username}">Username</a>
+                                <span class="post-timestamp" th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2024 12:30</span>
+                            </div>
+                            <div class="post-content" th:text="${post.content}">Content</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-</div>
 
-<div th:if="${error}" class="flash" th:text="${error}"></div>
-<div th:if="${success}" class="flash" th:text="${success}" style="color:green"></div>
+    <script>
+        // Profile dropdown toggle
+        const profileBtn = document.getElementById('profileBtn');
+        const dropdownMenu = document.getElementById('dropdownMenu');
 
-<form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" enctype="multipart/form-data" class="form-row">
-    <label for="contentInput" class="sr-only">Post content</label>
-    <input id="contentInput" type="text" name="content" placeholder="What's happening?" required maxlength="280" style="flex:1">
-    <input type="file" name="file" accept="image/*" style="width:120px">
-    <button type="submit">Post</button>
-</form>
+        if (profileBtn && dropdownMenu) {
+            profileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('active');
+            });
 
-<div th:if="${currentUser == null}" style="margin-top:12px;">Please <a th:href="@{/login}">login</a> to post.</div>
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.profile-dropdown-wrapper')) {
+                    dropdownMenu.classList.remove('active');
+                }
+            });
 
-<div th:each="post : ${posts}" class="post">
-    <a th:href="@{/user/{id}(id=${post.user.id})}" th:text="${post.user.username}">Username</a>:
-    <span th:text="${post.content}">Content</span>
-    <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}">
-        <img th:if="${#strings.startsWith(mediaMap[post.mediaId]['type'], 'image')}"
-             th:src="${mediaMap[post.mediaId]['url']}"
-             th:alt="${mediaMap[post.mediaId]['filename']}"
-             style="max-width:100%; margin-top:8px; display:block">
-
-        <video th:if="${#strings.startsWith(mediaMap[post.mediaId]['type'], 'video')}"
-               controls
-               th:src="${mediaMap[post.mediaId]['url']}"
-               style="max-width:100%; margin-top:8px; display:block">
-            Your browser does not support the video tag.
-        </video>
-    </div>
-</div>
+            // Close dropdown when clicking on a menu item
+            dropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    dropdownMenu.classList.remove('active');
+                });
+            });
+        }
+    </script>
 </body>
 </html>

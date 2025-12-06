@@ -3,26 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <title>Register - Toko</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
-        .flash { color: red; margin-bottom: 12px; }
-        .success { color: green; margin-bottom: 12px; }
-        form { display:flex; flex-direction:column; gap:8px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-<h1>Register</h1>
-<div th:if="${error}" class="flash" th:text="${error}"></div>
-<div th:if="${success}" class="success" th:text="${success}"></div>
-<form method="post" th:action="@{/register}">
-    <label>Username <input type="text" name="username" required></label>
-    <label>Password <input type="password" name="password" required></label>
-    <label>Confirm Password <input type="password" name="confirm" required></label>
-    <button type="submit">Register</button>
-</form>
-<p><a th:href="@{/login}">Already have an account? Login</a></p>
-<p><a th:href="@{/}">Back to home</a></p>
+    <div class="container">
+        <header class="header">
+            <div class="logo">Toko</div>
+            <nav class="nav">
+                <a href="/">Home</a>
+                <a href="/login">Login</a>
+            </nav>
+        </header>
+
+        <main class="auth-area">
+            <p class="start-text">START FOR FREE</p>
+            <h1>Create new account</h1>
+            <p class="auth-link">Already a Member? <a href="/login">Log In</a></p>
+
+            <div th:if="${error}" class="flash" th:text="${error}"></div>
+            <div th:if="${success}" class="success" th:text="${success}"></div>
+
+            <form class="auth-form" method="post" th:action="@{/register}">
+                <div class="input-group full-width">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                    <i class="fas fa-user icon-append"></i>
+                </div>
+
+                <div class="input-group full-width">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                    <i class="fas fa-lock icon-append"></i>
+                </div>
+
+                <div class="input-group full-width">
+                    <label for="confirm">Confirm Password</label>
+                    <input type="password" id="confirm" name="confirm" required>
+                    <i class="fas fa-check icon-append"></i>
+                </div>
+
+                <div class="button-group single-button">
+                    <button type="submit" class="btn btn-primary">Create account</button>
+                </div>
+            </form>
+
+            <p style="text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
+                <a href="/" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Back to home</a>
+            </p>
+        </main>
+    </div>
 </body>
 </html>
-
