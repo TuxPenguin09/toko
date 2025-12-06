@@ -136,9 +136,14 @@
                 <div class="post-with-pic-wrapper">
                     <!-- Profile Picture -->
                     <div class="post-form-pic">
-                        <img th:if="${currentUser.profilePicture}" th:src="${currentUser.profilePicture}"
-                            alt="Your profile picture" class="post-form-avatar">
-                        <div th:if="!${currentUser.profilePicture}" class="post-form-avatar-placeholder">
+                        <img th:if="${profilePictureMap[currentUser.id] != null}"
+                            th:src="${profilePictureMap[currentUser.id]}" alt="Your profile picture"
+                            class="post-form-avatar">
+                        <img th:if="${(profilePictureMap[currentUser.id] == null) and (currentUser.profilePicture != null)}"
+                            th:src="${currentUser.profilePicture}" alt="Your profile picture"
+                            class="post-form-avatar">
+                        <div th:if="${(profilePictureMap[currentUser.id] == null) and (currentUser.profilePicture == null)}"
+                            class="post-form-avatar-placeholder">
                             <i class="fas fa-user"></i>
                         </div>
                     </div>
@@ -174,9 +179,13 @@
                     <div class="post-with-pic">
                         <!-- Profile Picture -->
                         <div class="post-avatar">
-                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}"
-                                alt="Profile picture" class="post-avatar-img">
-                            <div th:if="!${post.user.profilePicture}" class="post-avatar-placeholder">
+                            <img th:if="${profilePictureMap[post.user.id] != null}"
+                                th:src="${profilePictureMap[post.user.id]}" alt="Profile picture"
+                                class="post-avatar-img">
+                            <img th:if="${(profilePictureMap[post.user.id] == null) and (post.user.profilePicture != null)}"
+                                th:src="${post.user.profilePicture}" alt="Profile picture" class="post-avatar-img">
+                            <div th:if="${(profilePictureMap[post.user.id] == null) and (post.user.profilePicture == null)}"
+                                class="post-avatar-placeholder">
                                 <i class="fas fa-user"></i>
                             </div>
                         </div>

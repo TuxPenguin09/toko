@@ -349,24 +349,26 @@
             <div class="user-header">
                 <div class="profile-picture-container">
                     <!-- Profile Picture -->
-                    <img th:if="${user.profilePicture}" th:src="${user.profilePicture}" alt="Profile picture"
-                        class="profile-picture">
-                    <div th:if="!${user.profilePicture}" class="profile-picture-placeholder">
+                    <img th:if="${profilePictureMap[user.id] != null}"
+                        th:src="${profilePictureMap[user.id]}" alt="Profile picture" class="profile-picture">
+                    <img th:if="${(profilePictureMap[user.id] == null) and (user.profilePicture != null)}"
+                        th:src="${user.profilePicture}" alt="Profile picture" class="profile-picture">
+                    <div th:if="${(profilePictureMap[user.id] == null) and (user.profilePicture == null)}"
+                        class="profile-picture-placeholder">
                         <i class="fas fa-user"></i>
                     </div>
 
                     <!-- Upload Button (only for own profile) -->
                     <button th:if="${currentUser != null and currentUser.id == user.id}" class="upload-button"
-                        id="uploadBtn" title="Upload profile picture">
+                        id="uploadBtn" title="Upload profile picture"
+                        th:data-upload-url="${mediaBaseUrl + '/api/media/upload'}"
+                        th:data-set-url="@{/user/{id}/profile-picture(id=${user.id})}">
                         <i class="fas fa-camera"></i>
                     </button>
 
-                    <!-- Hidden File Input -->
-                    <form th:if="${currentUser != null and currentUser.id == user.id}"
-                        th:action="@{/user/{id}/profile-picture(id=${user.id})}" method="post"
-                        enctype="multipart/form-data" id="uploadForm" style="display: none;">
-                        <input type="file" id="profilePictureInput" name="file" accept="image/*" required>
-                    </form>
+                    <!-- Hidden File Input (client uploads directly to media service) -->
+                    <input th:if="${currentUser != null and currentUser.id == user.id}" type="file"
+                        id="profilePictureInput" name="file" accept="image/*" style="display:none" />
                 </div>
 
                 <div class="user-info">
@@ -399,10 +401,10 @@
                 <div th:each="post : ${posts}" class="post-item">
                     <div class="post-with-pic">
                         <!-- Profile Picture -->
-                        <div class="post-avatar">
-                            <img th:if="${post.user.profilePicture}" th:src="${post.user.profilePicture}"
+                            <div class="post-avatar">
+                            <img th:if="${post.user.profilePicture != null}" th:src="${post.user.profilePicture}"
                                 alt="Profile picture" class="post-avatar-img">
-                            <div th:if="!${post.user.profilePicture}" class="post-avatar-placeholder">
+                            <div th:if="${post.user.profilePicture == null}" class="post-avatar-placeholder">
                                 <i class="fas fa-user"></i>
                             </div>
                         </div>
@@ -438,19 +440,53 @@
     </div>
 
     <script>
-        // Profile picture upload
+        // Profile picture upload: client uploads directly to the media service,
+        // then notifies this app with the returned mediaId so toko can store the profile reference.
         const uploadBtn = document.getElementById('uploadBtn');
         const profilePictureInput = document.getElementById('profilePictureInput');
-        const uploadForm = document.getElementById('uploadForm');
 
         if (uploadBtn && profilePictureInput) {
+            const uploadUrl = uploadBtn.getAttribute('data-upload-url');
+            const setUrl = uploadBtn.getAttribute('data-set-url');
+
             uploadBtn.addEventListener('click', function () {
                 profilePictureInput.click();
             });
 
-            profilePictureInput.addEventListener('change', function () {
-                if (this.files.length > 0) {
-                    uploadForm.submit();
+            profilePictureInput.addEventListener('change', async function () {
+                if (!this.files || this.files.length === 0) return;
+                const file = this.files[0];
+                const fd = new FormData();
+                fd.append('file', file);
+                try {
+                    const resp = await fetch(uploadUrl, { method: 'POST', body: fd });
+                    if (!resp.ok) {
+                        alert('Upload failed');
+                        return;
+                    }
+                    const json = await resp.json();
+                    const mediaId = json.id;
+                    if (!mediaId) {
+                        alert('Upload succeeded but no media id returned');
+                        return;
+                    }
+
+                    // Inform toko to set this media as the user's profile picture
+                    const setResp = await fetch(setUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ mediaId: String(mediaId) })
+                    });
+                    if (setResp.ok) {
+                        // refresh to show new picture
+                        location.reload();
+                    } else {
+                        const text = await setResp.text();
+                        alert('Could not set profile picture: ' + text);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error uploading profile picture');
                 }
             });
         }

@@ -78,6 +78,11 @@ public class HomeController {
         return null;
     }
 
+    @ModelAttribute("mediaBaseUrl")
+    public String mediaBaseUrl() {
+        return this.mediaBaseUrl;
+    }
+
     @GetMapping
     public String index(Model model, HttpSession session) {
         List<Post> posts = postService.getAllPostsDesc();
@@ -88,7 +93,12 @@ public class HomeController {
 
         model.addAttribute("likeCounts", getLikeCounts(posts));
 
+        // Resolve profile pictures for users referenced on this page
+        var usersOnPage = posts.stream().map(Post::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
         Object uid = session.getAttribute("userId");
+        if (uid != null) usersOnPage.add(userService.getUser((uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue()));
+        model.addAttribute("profilePictureMap", resolveProfilePictureForUsers(usersOnPage));
+
         if (uid != null) {
             Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
             model.addAttribute("likedPosts", getLikedPostIds(userId, posts));
@@ -122,6 +132,11 @@ public class HomeController {
         } else {
             model.addAttribute("likedPosts", new HashSet<Long>()); // Empty set for non-logged in
         }
+
+        // Resolve profile pictures for the profile and its posts
+        var usersOnPage = posts.stream().map(Post::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
+        usersOnPage.add(user);
+        model.addAttribute("profilePictureMap", resolveProfilePictureForUsers(usersOnPage));
 
         return "user"; // Thymeleaf template
     }
@@ -171,7 +186,7 @@ public class HomeController {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.MULTIPART_FORM_DATA);
                 HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
-                ResponseEntity<java.util.Map> resp = rest.postForEntity("http://localhost:8092/api/media/upload", requestEntity, java.util.Map.class);
+                ResponseEntity<java.util.Map> resp = rest.postForEntity(mediaBaseUrl + "/api/media/upload", requestEntity, java.util.Map.class);
                 if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
                     Object idObj = resp.getBody().get("id");
                     if (idObj instanceof Number) mediaId = ((Number) idObj).longValue();
@@ -291,10 +306,59 @@ public class HomeController {
         return likedIds;
     }
 
+    private Map<Long, String> resolveProfilePictureForUsers(Set<User> users) {
+        Map<Long, String> map = new HashMap<>();
+        if (users == null || users.isEmpty()) return map;
+        RestTemplate rest = new RestTemplate();
+        for (User u : users) {
+            if (u == null || u.getId() == null) continue;
+            String pp = u.getProfilePicture();
+            if (pp == null || pp.isBlank()) continue;
+            String resolved = null;
+            try {
+                if (pp.startsWith("http://") || pp.startsWith("https://")) {
+                    resolved = pp;
+                } else if (pp.startsWith("/")) {
+                    String base = mediaBaseUrl.endsWith("/") ? mediaBaseUrl.substring(0, mediaBaseUrl.length()-1) : mediaBaseUrl;
+                    resolved = base + pp;
+                } else {
+                    // maybe the stored value is a media id
+                    try {
+                        Long mid = Long.parseLong(pp);
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> dto = rest.getForObject(mediaBaseUrl + "/api/media/" + mid, Map.class);
+                        if (dto != null) {
+                            Object urlObj = dto.get("url");
+                            if (urlObj instanceof String) {
+                                String url = (String) urlObj;
+                                if (url.startsWith("/")) {
+                                    String base = mediaBaseUrl.endsWith("/") ? mediaBaseUrl.substring(0, mediaBaseUrl.length()-1) : mediaBaseUrl;
+                                    url = base + url;
+                                }
+                                resolved = url;
+                            }
+                        }
+                    } catch (NumberFormatException nfe) {
+                        // not a number, give up
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+            if (resolved != null) map.put(u.getId(), resolved);
+        }
+        return map;
+    }
+
+    /**
+     * Associate a previously uploaded media item (on the media service) with the user's profile.
+     * This endpoint does NOT accept files; the client should upload directly to the media service
+     * and then call this endpoint with the returned mediaId. toko will then fetch the media
+     * info and store the resolved absolute URL on the User.profilePicture field.
+     */
     @PostMapping("user/{id}/profile-picture")
-    public String uploadProfilePicture(
+    public String setProfilePictureFromMedia(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file,
+            @RequestParam(name = "mediaId", required = true) Long mediaId,
             RedirectAttributes redirectAttributes,
             HttpSession session
     ) {
@@ -316,49 +380,27 @@ public class HomeController {
             return "redirect:/";
         }
 
-        // Validate file
-        if (file.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Please select a file");
-            return "redirect:/user/" + id;
-        }
-
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            redirectAttributes.addFlashAttribute("error", "Please upload an image file");
-            return "redirect:/user/" + id;
-        }
-
         try {
-            // Create uploads directory if it doesn't exist
-            String uploadsDir = "uploads/profiles";
-            File dir = new File(uploadsDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-            // Generate filename
-            String filename = "user_" + id + "_" + System.currentTimeMillis() + getFileExtension(file.getOriginalFilename());
-            String filepath = uploadsDir + File.separator + filename;
-
-            // Save file
-            Files.write(Paths.get(filepath), file.getBytes());
-
-            // Delete old profile picture if exists
-            if (user.getProfilePicture() != null && !user.getProfilePicture().isEmpty()) {
-                try {
-                    Files.deleteIfExists(Paths.get(user.getProfilePicture()));
-                } catch (Exception e) {
-                    System.err.println("Could not delete old profile picture: " + e.getMessage());
+            RestTemplate rest = new RestTemplate();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> dto = rest.getForObject(mediaBaseUrl + "/api/media/" + mediaId, Map.class);
+            if (dto != null) {
+                Object urlObj = dto.get("url");
+                if (urlObj instanceof String) {
+                    String url = (String) urlObj;
+                    if (url.startsWith("/")) {
+                        String base = mediaBaseUrl.endsWith("/") ? mediaBaseUrl.substring(0, mediaBaseUrl.length()-1) : mediaBaseUrl;
+                        url = base + url;
+                    }
+                    user.setProfilePicture(url);
+                    userRepository.save(user);
+                    redirectAttributes.addFlashAttribute("success", "Profile picture updated successfully");
+                    return "redirect:/user/" + id;
                 }
             }
-
-            // Update user profile picture path
-            user.setProfilePicture("/" + filepath.replace(File.separator, "/"));
-            userRepository.save(user);
-
-            redirectAttributes.addFlashAttribute("success", "Profile picture updated successfully");
+            redirectAttributes.addFlashAttribute("error", "Media not found");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Could not upload file: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Could not set profile picture: " + e.getMessage());
         }
 
         return "redirect:/user/" + id;
