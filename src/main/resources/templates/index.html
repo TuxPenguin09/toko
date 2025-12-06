@@ -51,7 +51,7 @@
             <div th:if="${error}" class="flash" th:text="${error}"></div>
             <div th:if="${success}" class="flash success" th:text="${success}"></div>
 
-            <form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" class="post-form-container-with-pic">
+            <form th:if="${currentUser != null}" th:action="@{/user/{id}/post(id=${currentUser.id})}" method="post" enctype="multipart/form-data" class="post-form-container-with-pic">
                 <div class="post-with-pic-wrapper">
                     <!-- Profile Picture -->
                     <div class="post-form-pic">
@@ -67,8 +67,15 @@
                             <input id="contentInput" type="text" name="content" placeholder="What's happening?" required maxlength="280">
                         </div>
 
-                        <div class="post-actions">
-                            <button type="submit" class="btn btn-primary">Post</button>
+                        <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                            <input type="file" id="postFileInput" name="file" accept="image/*" style="display:none" />
+                            <button type="button" id="postUploadBtn" class="btn" style="padding:8px 10px; background:transparent; border:1px solid var(--input-border); border-radius:6px; cursor:pointer;"> 
+                                <i class="fas fa-image"></i> Add media
+                            </button>
+                            <span id="postFileName" style="color:var(--text-muted); font-size:0.9rem;"></span>
+                            <div class="post-actions" style="margin-left:auto">
+                                <button type="submit" class="btn btn-primary">Post</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -95,6 +102,9 @@
                                 <span class="post-timestamp" th:text="${#temporals.format(post.createdAt, 'MMM d, yyyy HH:mm')}">Jan 1, 2024 12:30</span>
                             </div>
                             <div class="post-content" th:text="${post.content}">Content</div>
+                            <div th:if="${post.mediaId != null and mediaMap[post.mediaId] != null}" class="post-media-wrapper">
+                                <img th:src="${mediaMap[post.mediaId].url}" alt="Post media" class="post-media" style="max-width:100%; margin-top:8px; border-radius:8px;"/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -125,6 +135,21 @@
                 item.addEventListener('click', function() {
                     dropdownMenu.classList.remove('active');
                 });
+            });
+        }
+
+        // Post media upload button
+        const postUploadBtn = document.getElementById('postUploadBtn');
+        const postFileInput = document.getElementById('postFileInput');
+        const postFileName = document.getElementById('postFileName');
+        if (postUploadBtn && postFileInput) {
+            postUploadBtn.addEventListener('click', () => postFileInput.click());
+            postFileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    postFileName.textContent = this.files[0].name;
+                } else {
+                    postFileName.textContent = '';
+                }
             });
         }
     </script>
