@@ -12,6 +12,11 @@
         .flash { color: red; margin-bottom:12px; }
         .sr-only { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
         .meta { display:flex; justify-content:space-between; align-items:center }
+        .post-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .like-btn { background: none; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+        .liked { color: #e0245e; font-weight: bold; }
+        .not-liked { color: #657786; }
+        .timestamp { color: #657786; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -57,6 +62,22 @@
                style="max-width:100%; margin-top:8px; display:block">
             Your browser does not support the video tag.
         </video>
+    </div>
+
+    <!-- LIKE BUTTON SECTION -->
+    <div class="post-footer">
+        <div>
+            <form th:action="@{/post/{postId}/like(postId=${post.id})}" method="post" style="display: inline;">
+                <button type="submit" class="like-btn"
+                        th:classappend="${likedPosts != null and likedPosts.contains(post.id)} ? 'liked' : 'not-liked'">
+                    ❤️
+                    <span th:text="${likeCounts != null ? likeCounts.get(post.id) : 0}">0</span>
+                </button>
+            </form>
+        </div>
+        <div class="timestamp" th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">
+            Jan 1, 12:00
+        </div>
     </div>
 </div>
 </body>

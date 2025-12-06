@@ -1,5 +1,7 @@
 package com.memo.toko.controller;
 
+import com.memo.toko.model.Like;
+import com.memo.toko.repository.LikeRepository;
 import org.springframework.beans.factory.annotation.Value;
 import com.memo.toko.model.Post;
 import com.memo.toko.model.User;
@@ -28,9 +30,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -40,16 +40,19 @@ public class HomeController {
     private final UserService userService;
     private final PostService postService;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
     private final String mediaBaseUrl;
 
     @Autowired
     public HomeController(UserService userService,
                           PostService postService,
                           UserRepository userRepository,
+                          LikeRepository likeRepository,
                           @Value("${media.service.base-url:http://localhost:8092}") String mediaBaseUrl) {
         this.userService = userService;
         this.postService = postService;
         this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
         this.mediaBaseUrl = (mediaBaseUrl == null ? "http://localhost:8092" : mediaBaseUrl.trim());
     }
 
@@ -60,24 +63,34 @@ public class HomeController {
             return userService.getUser((Long) uid);
         }
         if (uid instanceof Integer) {
-            // sometimes session stores Integer from form hidden value; handle gracefully
             return userService.getUser(((Integer) uid).longValue());
         }
         return null;
     }
 
     @GetMapping
-    public String index(Model model) {
+    public String index(Model model, HttpSession session) {
         List<Post> posts = postService.getAllPostsDesc();
         model.addAttribute("posts", posts);
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("newPost", new Post());
         model.addAttribute("mediaMap", mediaForPosts(posts));
+
+        // Add like data
+        Object uid = session.getAttribute("userId");
+        if (uid != null) {
+            Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
+            model.addAttribute("likeCounts", getLikeCounts(posts));
+            model.addAttribute("likedPosts", getLikedPostIds(userId, posts));
+        }
+
         return "index";
     }
 
     @GetMapping("user/{id}")
-    public String userPage(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String userPage(@PathVariable Long id, Model model,
+                           RedirectAttributes redirectAttributes,
+                           HttpSession session) {
         User user = userService.getUser(id);
         if (user == null) {
             redirectAttributes.addFlashAttribute("error", "User not found");
@@ -87,7 +100,16 @@ public class HomeController {
         List<Post> posts = postService.getUserPosts(id);
         model.addAttribute("posts", posts);
         model.addAttribute("mediaMap", mediaForPosts(posts));
-        return "user"; // Thymeleaf template
+
+        // Add like data
+        Object uid = session.getAttribute("userId");
+        if (uid != null) {
+            Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
+            model.addAttribute("likeCounts", getLikeCounts(posts));
+            model.addAttribute("likedPosts", getLikedPostIds(userId, posts));
+        }
+
+        return "user";
     }
 
     @PostMapping("user/{id}/post")
@@ -204,5 +226,55 @@ public class HomeController {
             redirectAttributes.addFlashAttribute("error", "Could not delete post");
         }
         return "redirect:/user/" + userId;
+    }
+
+    @PostMapping("/post/{postId}/like")
+    public String likePost(@PathVariable Long postId,
+                           HttpSession session,
+                           RedirectAttributes redirectAttributes) {
+        Object uid = session.getAttribute("userId");
+        if (uid == null) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to like posts");
+            return "redirect:/login";
+        }
+
+        Long userId = (uid instanceof Long) ? (Long) uid : ((Integer) uid).longValue();
+
+        Optional<Like> existingLike = likeRepository.findByUserIdAndPostId(userId, postId);
+
+        if (existingLike.isPresent()) {
+            // Unlike
+            likeRepository.delete(existingLike.get());
+        } else {
+            // Like
+            User user = userService.getUser(userId);
+            Post post = postService.getPostById(postId);
+            if (post != null) {
+                Like like = new Like();
+                like.setUser(user);
+                like.setPost(post);
+                likeRepository.save(like);
+            }
+        }
+
+        return "redirect:/";
+    }
+
+    private Map<Long, Integer> getLikeCounts(List<Post> posts) {
+        Map<Long, Integer> counts = new HashMap<>();
+        for (Post post : posts) {
+            counts.put(post.getId(), likeRepository.countByPostId(post.getId()));
+        }
+        return counts;
+    }
+
+    private Set<Long> getLikedPostIds(Long userId, List<Post> posts) {
+        Set<Long> likedIds = new HashSet<>();
+        for (Post post : posts) {
+            if (likeRepository.existsByUserIdAndPostId(userId, post.getId())) {
+                likedIds.add(post.getId());
+            }
+        }
+        return likedIds;
     }
 }

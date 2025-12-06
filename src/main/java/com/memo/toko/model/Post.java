@@ -1,14 +1,6 @@
 package com.memo.toko.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Column;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.PrePersist;
-
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,7 +14,6 @@ public class Post {
 
     private LocalDateTime createdAt;
 
-    // optional media reference (stores id from media table)
     private Long mediaId;
 
     @ManyToOne
@@ -42,10 +33,6 @@ public class Post {
         return content;
     }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -54,12 +41,17 @@ public class Post {
         return mediaId;
     }
 
-    public void setMediaId(Long mediaId) {
-        this.mediaId = mediaId;
-    }
-
     public User getUser() {
         return user;
+    }
+
+    // Setters
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setMediaId(Long mediaId) {
+        this.mediaId = mediaId;
     }
 
     public void setUser(User user) {

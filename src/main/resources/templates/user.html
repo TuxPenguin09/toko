@@ -7,10 +7,16 @@
     <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding:16px }
         .post { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
-        .delete-btn { color: red; font-size: 0.8em; cursor: pointer; }
+        .delete-btn { color: red; font-size: 0.8em; cursor: pointer; background: none; border: none; }
         .flash { color: red; margin-bottom:12px; }
         .sr-only { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
         .meta { display:flex; justify-content:space-between; align-items:center }
+        .post-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .like-btn { background: none; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+        .liked { color: #e0245e; font-weight: bold; }
+        .not-liked { color: #657786; }
+        .timestamp { color: #657786; font-size: 12px; }
+        .post-actions { display: flex; gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
@@ -55,10 +61,33 @@
             Your browser does not support the video tag.
         </video>
     </div>
-    <form th:if="${currentUser != null and currentUser.id == user.id}" th:action="@{/post/{postId}/delete(postId=${post.id})}" method="post" style="display:inline" onsubmit="return confirm('Delete this post?');">
-        <input type="hidden" name="userId" th:value="${user.id}">
-        <button type="submit" class="delete-btn">Delete</button>
-    </form>
+
+    <!-- POST FOOTER WITH LIKE AND DELETE BUTTONS -->
+    <div class="post-footer">
+        <div class="post-actions">
+            <!-- LIKE BUTTON -->
+            <form th:action="@{/post/{postId}/like(postId=${post.id})}" method="post" style="display: inline;">
+                <button type="submit" class="like-btn"
+                        th:classappend="${likedPosts != null and likedPosts.contains(post.id)} ? 'liked' : 'not-liked'">
+                    ❤️
+                    <span th:text="${likeCounts != null ? likeCounts.get(post.id) : 0}">0</span>
+                </button>
+            </form>
+
+            <!-- DELETE BUTTON (only for post owner) -->
+            <form th:if="${currentUser != null and currentUser.id == user.id}"
+                  th:action="@{/post/{postId}/delete(postId=${post.id})}"
+                  method="post"
+                  style="display:inline"
+                  onsubmit="return confirm('Delete this post?');">
+                <input type="hidden" name="userId" th:value="${user.id}">
+                <button type="submit" class="delete-btn">Delete</button>
+            </form>
+        </div>
+        <div class="timestamp" th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">
+            Jan 1, 12:00
+        </div>
+    </div>
 </div>
 
 <a href="/" style="display:block; margin-top:20px;">Back to Home</a>

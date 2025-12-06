@@ -10,30 +10,37 @@ import java.util.List;
 
 @Service
 public class PostService {
+
     @Autowired
-    private PostRepository postRepo;
+    private PostRepository postRepository;
 
     public List<Post> getUserPosts(Long userId) {
-        return postRepo.findByUserIdOrderByCreatedAtDesc(userId);
+        return postRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
     public List<Post> getAllPostsDesc() {
-        return postRepo.findAllByOrderByCreatedAtDesc();
+        return postRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public void createPost(User user, String content) {
-        createPost(user, content, null);
+        this.createPost(user, content, null);
     }
 
     public void createPost(User user, String content, Long mediaId) {
-        Post p = new Post();
-        p.setUser(user);
-        p.setContent(content);
-        if (mediaId != null) p.setMediaId(mediaId);
-        postRepo.save(p);
+        Post post = new Post();
+        post.setUser(user);
+        post.setContent(content);
+        if (mediaId != null) {
+            post.setMediaId(mediaId);
+        }
+        postRepository.save(post);
     }
 
     public void deletePost(Long postId) {
-        postRepo.deleteById(postId);
+        postRepository.deleteById(postId);
+    }
+
+    public Post getPostById(Long postId) {
+        return postRepository.findById(postId).orElse(null);
     }
 }
